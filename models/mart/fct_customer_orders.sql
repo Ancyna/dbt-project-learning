@@ -11,6 +11,16 @@ orders AS(
 )
 ,
 
+final AS(
+    select
+
+    from orders
+    inner join customers
+        on orders.customer_id = customers.customer_id
+)
+
+
+
 
 customer_order_history AS (
 
