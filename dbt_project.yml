@@ -43,3 +43,9 @@ models:
 
     marts:
       +materialized: table
+
+    audit:
+      +enabled: false
+
+    snowflake_spend:
+      enabled: true
