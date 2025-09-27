@@ -18,3 +18,16 @@ macros:
       - name: role
         type: string
         description: name of role which need access. defualt is {{ target.role }} value.
+
+  - name: union_all_tables_prefix
+    description: it will generate query having union all statement based on prefix in database.schema
+    arguments:
+      - name: database
+        type: string
+        description: name of database where we want to do union all
+      - name: schema
+        type: string
+        description: name of schema where tables are present
+      - name: prefix
+        type: string
+        description: text with which table is starting
