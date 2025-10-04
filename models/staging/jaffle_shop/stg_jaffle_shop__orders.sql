@@ -12,7 +12,7 @@ tansformed AS (
             when order_status NOT IN ('returned','return_pending') 
             then order_date 
         end as valid_order_date
-        ,row_number() over (partition by user_id order by order_date, id) as user_order_seq,
+        ,row_number() over (partition by user_id order by order_date, id) as user_order_seq
     from source  --raw.jaffle_shop.orders
     )
 select * from tansformed
