@@ -1,7 +1,7 @@
 with payment as(
     select * 
     from {{ ref('stg_stripe__payments') }}
-    where status = 'success'
+    where payment_status = 'success'
 ),
 pivoted as(
     select
@@ -9,7 +9,7 @@ pivoted as(
 
         {%- set payment_methods= ['credit_card','bank_transfer','gift_card','coupon'] -%}
         {% for payment_method in payment_methods  %}
-            sum(case when payment_method = '{{payment_method}}' then amount else 0 end) as {{payment_method}}_amount
+            sum(case when payment_method = '{{payment_method}}' then payment_amount else 0 end) as {{payment_method}}_amount
             
             {%- if not loop.last -%}
                 ,                
