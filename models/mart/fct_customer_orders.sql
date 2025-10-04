@@ -1,97 +1,61 @@
--- with statement
-WITH
--- import CTEs
-customers AS(
-    select  
-        * 
-    from  {{ ref('stg_jaffle_shop__customers') }}
-),
-orders AS(
-    select * from {{ ref('int_orders') }}
-)
-,
+with 
 
-final AS(
-    select
+customers as (
 
-    from orders
-    inner join customers
-        on orders.customer_id = customers.customer_id
-)
-
-
-
-
-customer_order_history AS (
-
-    select 
-        customers.customer_id,
-        customers.full_name,
-        customers.surname,
-        customers.givenname,
-        min(orders.order_date) as first_order_date,
-        min(orders.valid_order_date) as first_non_returned_order_date,
-        max(orders.valid_order_date) as most_recent_non_returned_order_date,
-        COALESCE(max(user_order_seq),0) as order_count,
-        COALESCE(count(case 
-                        when orders.valid_order_date is not null 
-                        then 1 end)
-                ,0) as non_returned_order_count,
-        sum(case 
-                when orders.valid_order_date is not null 
-                    then orders.order_value_dollars 
-                else 0 
-                end
-            ) as total_lifetime_value,
-        sum(case 
-                when orders.valid_order_date is not null 
-                    then orders.order_value_dollars
-                else 0 
-                end
-            )/NULLIF(count(case 
-                            when orders.valid_order_date is not null 
-                            then 1 end)
-                    ,0) as avg_non_returned_order_value,
-        array_agg(distinct orders.order_id) as order_ids
-
-    from  customers
-    
-    join  orders
-        on orders.customer_id = customers.customer_id
-
-    
-
-    group by customers.id, customers.name, customers.last_name, customers.first_name
+  select * from {{ ref('stg_jaffle_shop__customers') }}
 
 ),
 
--- final CTE
+paid_orders as (
+
+  select * from {{ ref('int_orders') }}
+
+),
+
 final as (
-    select 
-        orders.order_id,
-        orders.customer_id,
-        customer_order_history.surname,
-        customer_order_history.givenname,
-        customer_order_history.first_order_date,
-        customer_order_history.order_count,
-        customer_order_history.total_lifetime_value,
-        orders.order_value_dollars,
-        orders.order_status,
-        payments.payment_status
-    from orders --raw.jaffle_shop.orders as orders
 
-    join customers
-        on orders.customer_id = customers.id
+  select
+    paid_orders.order_id,
+    paid_orders.customer_id,
+    paid_orders.order_placed_at,
+    paid_orders.order_status,
+    paid_orders.total_amount_paid,
+    paid_orders.payment_finalized_date,
+    customers.customer_first_name,
+    customers.customer_last_name,
 
-    join  customer_order_history
-        on orders.customer_id = customer_order_history.customer_id
+    -- sales transaction sequence
+    row_number() over (order by paid_orders.order_placed_at, paid_orders.order_id) as transaction_seq,
 
-    left outer join payments --raw.stripe.payment payments
-        on orders.order_id = payments.order_id
-    --where payments.payment_status != 'fail'
+    -- customer sales sequence
+    row_number() over (
+        partition by paid_orders.customer_id
+        order by paid_orders.order_placed_at, paid_orders.order_id
+        ) as customer_sales_seq,
+
+    -- new vs returning customer
+    case 
+      when (
+      rank() over (
+        partition by paid_orders.customer_id
+        order by paid_orders.order_placed_at, paid_orders.order_id
+        ) = 1
+      ) then 'new'
+    else 'return' end as nvsr,
+
+    -- customer lifetime value
+    sum(paid_orders.total_amount_paid) over (
+      partition by paid_orders.customer_id
+      order by paid_orders.order_placed_at, paid_orders.order_id
+      ) as customer_lifetime_value,
+
+    -- first day of sale
+    first_value(paid_orders.order_placed_at) over (
+      partition by paid_orders.customer_id
+      order by paid_orders.order_placed_at, paid_orders.order_id
+      ) as fdos
+    from paid_orders
+    left join customers on paid_orders.customer_id = customers.customer_id
 )
-
--- simple select statement
 
 select * from final
-
