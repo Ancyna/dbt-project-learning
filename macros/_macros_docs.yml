@@ -1,0 +1,33 @@
+macros:
+  - name: cent_to_dollars
+    description: A macro that convert dollars to cent and rounds to user input decimal place, or 2 if none is provided
+    arguments:
+      - name: column_name
+        type: string
+        description: The name of the column which needs conversion
+      - name: decimals
+        type: integer
+        description: Number of decimal places, default is 2
+
+  - name: grant_select
+    description: it will grant priviledges to select all tables and views on schema to role.
+    arguments:
+      - name: schema
+        type: string
+        description: name of schema where we need access. default is {{ target.schema }} value.
+      - name: role
+        type: string
+        description: name of role which need access. defualt is {{ target.role }} value.
+
+  - name: union_all_tables_prefix
+    description: it will generate query having union all statement based on prefix in database.schema
+    arguments:
+      - name: database
+        type: string
+        description: name of database where we want to do union all
+      - name: schema
+        type: string
+        description: name of schema where tables are present
+      - name: prefix
+        type: string
+        description: text with which table is starting
