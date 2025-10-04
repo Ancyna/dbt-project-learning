@@ -1,0 +1,36 @@
+models:
+  - name: fct_customer_orders
+    config:
+      contract:
+        enforced: true
+    columns:      
+      - name: customer_last_name
+        data_type: text
+      - name: customer_sales_seq
+        data_type: number
+      - name: customer_lifetime_value
+        data_type: number
+      - name: payment_finalized_date
+        data_type: date
+      - name: fdos
+        data_type: date
+      - name: customer_first_name
+        data_type: text
+      - name: transaction_seq
+        data_type: number
+      - name: customer_id
+        data_type: number
+        constraints:
+          - type: not_null
+      - name: order_status
+        data_type: text
+      - name: order_placed_at
+        data_type: date
+      - name: total_amount_paid
+        data_type: number
+      - name: nvsr
+        data_type: text
+      - name: order_id
+        data_type: number
+        constraints:
+          - type: not_null
